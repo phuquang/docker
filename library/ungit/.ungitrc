@@ -1,0 +1,9 @@
+{
+    "port": 8448,
+    "bugtracking": false,
+    "launchBrowser": false,
+    "urlBase": "http://ungit.docker",
+    "rootPath": "",
+    "ungitBindIp": "0.0.0.0",
+    "autoFetch": false
+}

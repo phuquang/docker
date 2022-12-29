@@ -1,0 +1,7 @@
+.vscode/*.log
+desktop.ini
+.DS_Store
+._*
+backups/*
+logs/*
+projects/*
