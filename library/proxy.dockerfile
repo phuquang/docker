@@ -1,11 +1,15 @@
-FROM nginx:1.21.6
-LABEL author="Phu"
+FROM nginx:1.23
+LABEL author="Pauli"
 LABEL maintainer="phuquanglxc@gmail.com"
 LABEL date="2022-01-01"
 
-ARG buildno
+ARG LIB_DIR=./proxy
+ARG BASH_DIR=./bash
 
-RUN apt-get update && apt-get install -y vim dnsutils net-tools iputils-ping tcpdump curl wget zip unzip
+RUN apt-get update && apt-get install -y vim curl wget zip unzip
 
-ADD ./proxy/bashrc /root/.bashrc
-ADD ./bashrc/bash_aliases.sh /root/.bash_aliases
+ADD "$LIB_DIR/bashrc" /root/.bashrc
+ADD "$BASH_DIR/bash_aliases" /root/.bash_aliases
+
+## cleanup
+RUN apt-get clean ; rm -rf /var/lib/apt/lists/* ; rm -rf /tmp/*

@@ -1,0 +1,12 @@
+[program:sample.worker]
+process_name=%(program_name)s_%(process_num)02d
+command=php /projects/sample/artisan queue:work databaseartisan queue:work database --queue=high,default,low --timeout=0 --force
+autostart=true
+autorestart=true
+stopasgroup=true
+killasgroup=true
+user=ubuntu
+numprocs=1
+redirect_stderr=true
+stdout_logfile=/var/log/supervisor/sample.worker.log
+stopwaitsecs=30

@@ -16,6 +16,7 @@ CFLAGS  = -g -Wall
 .DEFAULT_GOAL := help
 
 ifndef APP_ENV
+	# Determine if .env file exist
 	ifneq ("$(wildcard .env)","")
 		include .env
 	endif
@@ -28,7 +29,8 @@ BUILD=up -d --build
 DOWN=rm -fsv
 
 all:
-	@echo  ''
+	$(info I renewed myself)
+	@:
 
 help:
 	@echo
@@ -37,56 +39,87 @@ help:
 	@echo
 	@:
 
-up:                                ## docker-compose up
-	$(COMPOSE) up -d
+up: ## docker-compose up
+	@$(COMPOSE) up -d
 
-down:                              ## docker-compose down
+down: ## docker-compose down
+ifeq "$(s)" "proxy"
+	$(COMPOSE) $(DOWN) proxy
+else ifeq "$(s)" "apache"
+	$(COMPOSE) $(DOWN) apache
+else ifeq "$(s)" "php"
+	$(COMPOSE) $(DOWN) php
+else ifeq "$(s)" "ungit"
+	$(COMPOSE) $(DOWN) ungit
+else ifeq "$(s)" "supervisor"
+	$(COMPOSE) $(DOWN) supervisor
+else
 	$(COMPOSE) down
+endif
+	@:
 
-ps:                                ## docker-compose ps
-	$(COMPOSE) ps
-
-build:                             ## Build with service name (ex: make build s=proxy)
+build: ## Build with service name (ex: make build s=proxy)
 	@echo Building to service $(s)...
 	@$(COMPOSE) $(BUILD) $(s)
-	@$(COMPOSE) logs $(s)
 
-proxy-restart:                     ## docker exec workspace_proxy service nginx restart
-	@$(COMPOSE) exec proxy service nginx restart
-
-proxy-reload:                      ## docker proxy reload
-	@$(COMPOSE) exec proxy service nginx reload
-	@$(COMPOSE) exec apache service apache2 reload
-
-sh:                                ## SH with service name (ex: make sh s=proxy)
+sh: ## Connecting with service name (ex: make sh s=proxy)
 	@echo Connecting to service $(s)...
+ifeq "$(s)" "mysql"
+	@$(COMPOSE) exec -it -u root:root mysql bash
+else ifeq "$(s)" "ungit"
+	@$(COMPOSE) exec -it -u root:root ungit bash
+else ifeq "$(s)" "adminer"
+	@$(COMPOSE) exec -it adminer sh
+else ifeq "$(s)" "mailhog"
+	@$(COMPOSE) exec -it mailhog sh
+else
 	@$(COMPOSE) exec -it $(s) bash
+endif
+	@:
 
-log:                               ## docker run log
+log: ## View log (ex: make log s=access)
+ifeq "$(s)" "access"
+	@$(COMPOSE) exec -it proxy tail -fn100 /var/log/nginx/access.log
+else ifeq "$(s)" "error"
+	@$(COMPOSE) exec -it proxy tail -fn100 /var/log/nginx/error.log
+else ifeq "$(s)" "clean"
+	rm -f ./logs/apache/*.log
+	rm -f ./logs/proxy/*.log
+	rm -f ./logs/supervisor/*.log
+else
 	@$(COMPOSE) logs $(s)
+endif
+	@:
 
-run-wrk:                           ## docker run wrk
-	@docker run --rm -it $(APP_CONTAINER_NAME)_wrk:wrk wrk2 --version
+backup: ## Export all database in mysql
+	@$(COMPOSE) exec -it -u root:root mysql bash /bash/backup_database.bash
 
-list:                              ## docker list all
-	@echo "All container:"
-	@docker ps -a -s --format "table {{.ID}}\\t{{.Image}}\\t{{.Status}}\\t{{.Names}}\\t{{.Size}}"
-	@echo "Container running:"
-	@docker ps -s --format "table {{.ID}}\\t{{.Image}}\\t{{.Status}}\\t{{.Names}}\\t{{.Size}}"
-	@echo
-	@echo "All images:"
-	@docker images --format "table {{.ID}}\\t{{.Repository}}\\t{{.Tag}}\\t{{.Size}}"
-	@echo
-	@echo "All networks:"
-	@docker network ls
+restore: ## Export all database in mysql
+	@$(COMPOSE) exec -it -u root:root mysql bash /bash/restore_database.bash
 
-# remove-mysql:
-# 	docker compose stop mysql && docker compose rm mysql -f
-# 	docker rmi $(docker images -q mysql)
-# 	docker volume rm workspace_data-mysql
+reload: ## Reload service (ex: make reload s=config)
+ifeq "$(s)" "config"
+	@$(COMPOSE) exec -it proxy nginx -s reload
+	@echo "-› Reloading Proxy."
+	@$(COMPOSE) exec -it apache service apache2 reload > /dev/null
+	@echo "-› Reloading Apache."
+else ifeq "$(s)" "worker"
+	@$(COMPOSE) exec -it supervisor supervisorctl restart all
+else
+	$(info I renewed myself)
+endif
+	@:
+
+reset-all: ## Remove all Container, Image
+	@docker system prune -a
 
 clean:
 	@:
+
+test:
+	$(info Checking if custom header is needed)
+	@read -p "Enter : " varl; \
+	echo $$varl
 
 _TITLE := "\033[32m[%s]\033[0m %s\n" # Green text for "printf"
 _ERROR := "\033[31m[%s]\033[0m %s\n" # Red text for "printf"

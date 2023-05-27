@@ -7,39 +7,35 @@ services:
     build:
       context: ./library
       dockerfile: proxy.dockerfile
-      args:
-        buildno: 1
-      labels:
-        net.mimup.phuquang.description: "Proxy Web Service"
-        net.mimup.phuquang.department: "Develop"
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost"]
-      interval: 60s
-      timeout: 10s
-      retries: 3
-      start_period: 20s
     hostname: ${APP_CONTAINER_NAME}_proxy
-    image: ${APP_CONTAINER_NAME}_proxy:proxy
+    image: ${APP_CONTAINER_NAME}_proxy
     container_name: ${APP_CONTAINER_NAME}_proxy
     working_dir: /projects
     volumes:
       - ${APP_WORK_DATA}:/projects:delegated
       - ${APP_DATA}:/docker:delegated
       - ${APP_VOLUME_NGINX}:/etc/nginx/conf.d
-      - ./library/ssl:/etc/nginx/ssl
-      - ./logs/proxy:/var/log/nginx
+      - ${APP_VOLUME_SSL}:/etc/nginx/ssl
+      - ${APP_VOLUME_LOG}/proxy:/var/log/nginx
+      - ./library/proxy/config:/etc/nginx/config
     networks:
       - ${APP_NETWORK}
     ports:
       - 80:80
       - 443:443
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
 
   # Web server
   apache:
     restart: unless-stopped # always
     environment:
-      APACHE_RUN_USER: '#1001'
-      APACHE_RUN_GROUP: '#1001'
+      APACHE_RUN_USER: '#1000'
+      APACHE_RUN_GROUP: '#1000'
     build:
       args:
         USER: ${DOCKER_USER}
@@ -48,64 +44,73 @@ services:
       context: ./library
       dockerfile: apache.dockerfile
     hostname: ${APP_CONTAINER_NAME}_apache
-    image: ${APP_CONTAINER_NAME}_apache:apache
+    image: ${APP_CONTAINER_NAME}_apache
     container_name: ${APP_CONTAINER_NAME}_apache
     working_dir: /projects
     volumes:
       - ${APP_WORK_DATA}:/projects:delegated
       - ${APP_DATA}:/docker:delegated
       - ${APP_VOLUME_APACHE}:/etc/apache2/sites-enabled/
-      - ./logs/apache:/var/log/apache2
-      - ./library/ssl:/etc/ssl/local
+      - ${APP_VOLUME_SSL}:/etc/ssl/local
+      - ${APP_VOLUME_LOG}/apache:/var/log/apache2
+      - ./library/apache/config:/etc/apache2/config
     networks:
       - ${APP_NETWORK}
-    # ports:
-    #   - 80:80
-    #   - 443:443
 
   # PHP
-  php8:
-    restart: unless-stopped # always
+  php:
+    restart: unless-stopped
     build:
       args:
         USER: ${DOCKER_USER}
         USERID: ${DOCKER_UID}
         GROUPID: ${DOCKER_GID}
       context: ./library
-      dockerfile: php8.dockerfile
-    hostname: ${APP_CONTAINER_NAME}_php8
-    image: ${APP_CONTAINER_NAME}_php8:php8
-    container_name: ${APP_CONTAINER_NAME}_php8
+      dockerfile: php.dockerfile
+    hostname: ${APP_CONTAINER_NAME}_php
+    image: ${APP_CONTAINER_NAME}_php
+    container_name: ${APP_CONTAINER_NAME}_php
     volumes:
       - ${APP_WORK_DATA}:/projects:delegated
       - ${APP_DATA}:/docker:delegated
-      - ./conf_supervisor:/etc/supervisor/conf.d
-      - ./logs/supervisor:/var/log/supervisor
     working_dir: /projects
+    ports:
+      - 9000:9000
     networks:
       - ${APP_NETWORK}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
 
   # Tool access database
   adminer:
-    restart: unless-stopped # always
+    restart: unless-stopped
     image: adminer
     container_name: ${APP_CONTAINER_NAME}_adminer
     networks:
-        - ${APP_NETWORK}
+      - ${APP_NETWORK}
     ports:
         - 9011:8080
     environment:
       ADMINER_DEFAULT_DB_DRIVER: mysql # pgsql for PostgreSQL
       ADMINER_DEFAULT_SERVER: mysql
-      # ADMINER_DESIGN: galkaev
       PHP_CLI_MEMORY_LIMIT: 512M
       PHP_MAX_EXECUTION_TIME: 0
       PHP_POST_MAX_SIZE: 2000M
       PHP_UPLOAD_MAX_FILESIZE: 2000M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9011"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
 
   # Tool access database
   phpmyadmin:
-    restart: unless-stopped # always
+    restart: unless-stopped
     depends_on:
       - mysql
     image: phpmyadmin/phpmyadmin
@@ -116,7 +121,7 @@ services:
       PMA_PASSWORD: ${MYSQL_PASS}
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASS}
       MYSQL_PASSWORD: ${MYSQL_PASS}
-      MYSQL_USER: root
+      MYSQL_USER: ${MYSQL_USER}
       UPLOAD_LIMIT: 10000M
     volumes:
       - ./library/phpmyadmin/config.user.inc.php:/etc/phpmyadmin/config.user.inc.php
@@ -124,10 +129,16 @@ services:
       - ${APP_NETWORK}
     ports:
       - 9010:80
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9010"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
 
   # Database
   mysql:
-    restart: unless-stopped # always
+    restart: unless-stopped
     # platform: linux/x86_64 # running MySQL on ARM
     hostname: ${APP_CONTAINER_NAME}_mysql
     image: mysql:8
@@ -139,10 +150,10 @@ services:
     volumes:
       - ${APP_WORK_DATA}:/projects:delegated
       - ./library/mysql/bashrc:/home/mysql/.bashrc
-      - ./library/bashrc/bash_aliases.sh:/root/.bash_aliases
-      - ./library/script:/data
-      - ./backups:/backups
+      - ./library/bash/bash_aliases:/root/.bash_aliases
+      - ./library/bash:/bash
       - ./library/mysql/credentials.cnf:/home/mysql/credentials.cnf
+      - ./backups:/backups:delegated
       - data-mysql:/var/lib/mysql
     user: mysql
     networks:
@@ -154,7 +165,7 @@ services:
 
   # Tool for GIT
   ungit:
-    restart: unless-stopped # always
+    restart: unless-stopped
     build:
       args:
         USER: ${DOCKER_USER}
@@ -163,7 +174,7 @@ services:
       context: ./library
       dockerfile: ungit.dockerfile
     hostname: ${APP_CONTAINER_NAME}_ungit
-    image: ${APP_CONTAINER_NAME}_ungit:ungit
+    image: ${APP_CONTAINER_NAME}_ungit
     container_name: ${APP_CONTAINER_NAME}_ungit
     working_dir: /projects
     volumes:
@@ -171,10 +182,16 @@ services:
       - ${APP_DATA}:/docker:delegated
     networks:
       - ${APP_NETWORK}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8448"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
 
   # Mail
   mailhog:
-    restart: unless-stopped # always
+    restart: unless-stopped
     image: mailhog/mailhog:latest
     container_name: ${APP_CONTAINER_NAME}_mailhog
     networks:
@@ -182,23 +199,41 @@ services:
     ports:
       - 1025:1025
       - 8025:8025
-    command: ["-storage=maildir", "-maildir-path=/maildir"]
-    volumes:
-      - data-mailhog:/maildir:delegated
+    # volumes:
+    #   - data-mailhog:/maildir:delegated
     healthcheck:
       test: ["CMD", "echo | telnet 127.0.0.1 8025"]
       interval: 1m30s
       timeout: 5s
       retries: 3
 
+  supervisor:
+    restart: unless-stopped
+    build:
+      args:
+        USER: ${DOCKER_USER}
+        USERID: ${DOCKER_UID}
+        GROUPID: ${DOCKER_GID}
+      context: ./library
+      dockerfile: supervisor.dockerfile
+    image: ${APP_CONTAINER_NAME}_supervisor
+    container_name: ${APP_CONTAINER_NAME}_supervisor
+    volumes:
+      - ${APP_WORK_DATA}:/projects:delegated
+      - ${APP_DATA}:/docker:delegated
+      - ${APP_VOLUME_SUPERVISOR}:/etc/supervisor/conf.d:delegated
+      - ${APP_VOLUME_LOG}/supervisor:/var/log/supervisor
+    networks:
+      - ${APP_NETWORK}
+
   rabbitmq:
-    restart: unless-stopped # always
+    restart: unless-stopped
     image: "rabbitmq:3-management"
     container_name: ${APP_CONTAINER_NAME}_rabbitmq
     environment:
-      RABBITMQ_ERLANG_COOKIE: "unique-erlang-cookie"
-      RABBITMQ_DEFAULT_USER: "rabbitmq"
-      RABBITMQ_DEFAULT_PASS: "rabbitmq"
+      RABBITMQ_ERLANG_COOKIE: "SWQOKODSQALRPCLNMEQG"
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_USER}
       RABBITMQ_DEFAULT_VHOST: "/"
     ports:
       - 15671:15671
@@ -207,10 +242,14 @@ services:
       - 5672:5672
     networks:
       - ${APP_NETWORK}
+    volumes:
+      - data-rabbitmq:/var/lib/rabbitmq
+
 networks:
-  workspace:
+  workspace2:
     name: ${APP_NETWORK}
 
 volumes:
   data-mysql:
-  data-mailhog:
+  data-rabbitmq:
+  # data-mailhog:

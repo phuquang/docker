@@ -1,0 +1,9 @@
+default.pauli.vm    proxy;
+mysql.pauli.vm      phpmyadmin;
+adminer.pauli.vm    adminer;
+mariadb.pauli.vm    adminer-mariadb;
+ungit.pauli.vm      ungit;
+smtp.pauli.vm       mailhog;
+mail.pauli.vm       mailhog;
+mailhog.pauli.vm    mailhog;
+rabbitmq.pauli.vm   rabbitmq;

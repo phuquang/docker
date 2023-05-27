@@ -1,0 +1,8 @@
+default                      80;
+adminer.pauli.vm           8080;
+mariadb.pauli.vm           8080;
+ungit.pauli.vm             8448;
+smtp.pauli.vm              8025;
+mail.pauli.vm              8025;
+mailhog.pauli.vm           8025;
+rabbitmq.pauli.vm         15672;

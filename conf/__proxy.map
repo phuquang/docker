@@ -1,9 +1,0 @@
-default.docker    proxy;
-mysql.docker      phpmyadmin;
-adminer.docker    adminer;
-mariadb.docker    adminer-mariadb;
-ungit.docker      ungit;
-smtp.docker       mailhog;
-mail.docker       mailhog;
-mailhog.docker    mailhog;
-rabbitmq.docker   rabbitmq;

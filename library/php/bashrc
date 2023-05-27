@@ -3,3 +3,5 @@ PS1="\n\[\033[41m\] Container PHP \[\033[49m\] \t \[\033[1;36m\]\u\[\033[1;31m\]
 if [ -f ~/.bash_aliases ]; then
     . ~/.bash_aliases
 fi
+
+export PATH="$HOME/.composer/vendor/bin:$PATH"

@@ -1,2 +1,5 @@
 [core]
 	fileMode = false
+[user]
+	name = Pauli
+	email = pauli@cybridge.jp
