@@ -1,7 +1,8 @@
-.vscode/*.log
-desktop.ini
-.DS_Store
-._*
+.env
 backups/*
-logs/*
+library/ssl/rsa/localhost.crt
+library/ssl/rsa/localhost.key
+library/ssl/localhost.crt
+library/ssl/localhost.key
 projects/*
+logs/*
