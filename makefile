@@ -94,7 +94,7 @@ endif
 backup: ## Export all database in mysql
 	@$(COMPOSE) exec -it -u root:root mysql bash /bash/backup_database.bash
 
-restore: ## Export all database in mysql
+restore: ## Import all database into mysql
 	@$(COMPOSE) exec -it -u root:root mysql bash /bash/restore_database.bash
 
 reload: ## Reload service (ex: make reload s=config)

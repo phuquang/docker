@@ -37,6 +37,17 @@ sh install.sh
 ```
 → bạn sẽ thấy 2 file localhost.key và localhost.crt ở thư mục library/ssl
 
+## Khởi chạy
+Trở về thư mục đã clone (Ví dụ docker) và sử dụng lệnh sau
+```
+make build
+```
+
+### Để xem các lệnh khác hãy gõ
+```
+make
+```
+
 ## Thiết lập dự án mới
 1. Source code
 ```bash
