@@ -1,4 +1,4 @@
-FROM php:7.4-apache
+FROM php:8-apache
 LABEL author="Pauli"
 LABEL maintainer="phuquanglxc@gmail.com"
 LABEL date="2022-01-01"
