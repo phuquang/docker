@@ -85,6 +85,44 @@ services:
       retries: 3
       start_period: 20s
 
+  php7:
+    restart: unless-stopped
+    build:
+      args:
+        USER: ${DOCKER_USER}
+        USERID: ${DOCKER_UID}
+        GROUPID: ${DOCKER_GID}
+      context: ./library
+      dockerfile: php7.dockerfile
+    hostname: ${APP_CONTAINER_NAME}_php7
+    image: ${APP_CONTAINER_NAME}_php7
+    container_name: ${APP_CONTAINER_NAME}_php7
+    volumes:
+      - ${APP_WORK_DATA}:/projects:delegated
+      - ${APP_DATA}:/docker:delegated
+    working_dir: /projects
+    networks:
+      - ${APP_NETWORK}
+
+  php56:
+    restart: unless-stopped
+    build:
+      args:
+        USER: ${DOCKER_USER}
+        USERID: ${DOCKER_UID}
+        GROUPID: ${DOCKER_GID}
+      context: ./library
+      dockerfile: php5.6.dockerfile
+    hostname: ${APP_CONTAINER_NAME}_php56
+    image: ${APP_CONTAINER_NAME}_php56
+    container_name: ${APP_CONTAINER_NAME}_php56
+    volumes:
+      - ${APP_WORK_DATA}:/projects:delegated
+      - ${APP_DATA}:/docker:delegated
+    working_dir: /projects
+    networks:
+      - ${APP_NETWORK}
+
   # Tool access database
   adminer:
     restart: unless-stopped
