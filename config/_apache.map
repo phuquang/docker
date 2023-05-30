@@ -1,1 +1,2 @@
-#default.pauli.vm                           apache;
+#default2.pauli.vm                           apache;
+#default3.pauli.vm                     apache_php53;

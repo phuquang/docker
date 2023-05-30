@@ -1,0 +1,11 @@
+<VirtualHost *:80>
+    Define project_name sample.pauli.vm
+    Define project_path /projects/sample
+    Include /etc/apache2/config/default.conf
+</VirtualHost>
+
+<VirtualHost *:443>
+    Define project_name sample.pauli.vm
+    Define project_path /projects/sample
+    Include /etc/apache2/config/default_ssl.conf
+</VirtualHost>

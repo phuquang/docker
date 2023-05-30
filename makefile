@@ -103,6 +103,8 @@ ifeq "$(s)" "config"
 	@echo "-› Reloading Proxy."
 	@$(COMPOSE) exec -it apache service apache2 reload > /dev/null
 	@echo "-› Reloading Apache."
+	@$(COMPOSE) exec -it apache_php53 service apache2 reload > /dev/null
+	@echo "-› Reloading Apache PHP 5.3"
 else ifeq "$(s)" "worker"
 	@$(COMPOSE) exec -it supervisor supervisorctl restart all
 else

@@ -57,6 +57,32 @@ services:
     networks:
       - ${APP_NETWORK}
 
+  apache_php53:
+    restart: unless-stopped # always
+    environment:
+      APACHE_RUN_USER: '#1000'
+      APACHE_RUN_GROUP: '#1000'
+    build:
+      args:
+        USER: ${DOCKER_USER}
+        USERID: ${DOCKER_UID}
+        GROUPID: ${DOCKER_GID}
+      context: ./library
+      dockerfile: apache-php5.3.dockerfile
+    hostname: ${APP_CONTAINER_NAME}_apache_php53
+    image: ${APP_CONTAINER_NAME}_apache_php53
+    container_name: ${APP_CONTAINER_NAME}_apache_php53
+    working_dir: /projects
+    volumes:
+      - ${APP_WORK_DATA}:/projects:delegated
+      - ${APP_DATA}:/docker:delegated
+      - ./config_apache_php53:/etc/apache2/sites-enabled
+      - ${APP_VOLUME_SSL}:/etc/ssl/local
+      - ${APP_VOLUME_LOG}/apache_php53:/var/log/apache2
+      - ./library/apache/config:/etc/apache2/config
+    networks:
+      - ${APP_NETWORK}
+
   # PHP
   php:
     restart: unless-stopped
